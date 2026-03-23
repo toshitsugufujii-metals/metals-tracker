@@ -159,11 +159,15 @@
   <!-- チャートページ -->
   <div class="page" id="page-chart">
     <div class="section-title">価格チャート（リアルデータ）</div>
+
+    <!-- 金属選択 -->
     <div class="chart-metal-tabs">
       <button class="cmt-btn active-gold" id="cmtXAU" onclick="selectChartMetal('XAU',this)">🟡 金</button>
       <button class="cmt-btn" id="cmtXAG"  onclick="selectChartMetal('XAG',this)">⚪ 銀</button>
       <button class="cmt-btn" id="cmtXPT"  onclick="selectChartMetal('XPT',this)">🔵 プラチナ</button>
     </div>
+
+    <!-- 期間選択 -->
     <div class="period-tabs">
       <button class="period-btn" onclick="selectPeriod('1W',this)">1W</button>
       <button class="period-btn" onclick="selectPeriod('1M',this)">1M</button>
@@ -171,17 +175,64 @@
       <button class="period-btn" onclick="selectPeriod('6M',this)">6M</button>
       <button class="period-btn" onclick="selectPeriod('12M',this)">1Y</button>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-      <iframe id="tradingview-iframe"
-        src=""
-        style="width:100%;height:460px;border:none;display:block;"
-        allowtransparency="true"
-        scrolling="no">
-      </iframe>
+
+    <!-- チャートプレビューカード -->
+    <div id="chartCard" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px;">
+
+      <!-- 現在値表示 -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div id="chartMetalLabel" style="font-family:'Shippori Mincho',serif;font-size:1.1rem;font-weight:600;color:var(--gold)">金 (XAU/USD)</div>
+          <div style="font-size:0.65rem;color:var(--muted);margin-top:3px;">TradingViewでリアルタイムチャートを表示</div>
+        </div>
+        <div id="chartPriceBox" style="text-align:right;">
+          <div id="chartPriceVal" style="font-size:1.2rem;font-weight:500;color:var(--gold)">—</div>
+          <div id="chartChangeVal" style="font-size:0.72rem;margin-top:2px;">—</div>
+        </div>
+      </div>
+
+      <!-- チャートを開くボタン -->
+      <a id="chartOpenBtn" href="#" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;
+               background:linear-gradient(135deg,#1a2540,#0d1a35);
+               border:1px solid rgba(212,168,67,0.3);border-radius:12px;
+               padding:18px;text-decoration:none;margin-bottom:14px;
+               transition:all 0.2s;">
+        <span style="font-size:1.8rem;">📊</span>
+        <div>
+          <div style="color:var(--gold);font-weight:600;font-size:0.9rem;">TradingViewでチャートを開く</div>
+          <div style="color:var(--muted);font-size:0.65rem;margin-top:2px;">Safariで本格チャートが表示されます</div>
+        </div>
+        <span style="color:var(--gold);font-size:1.2rem;margin-left:auto;">→</span>
+      </a>
+
+      <!-- 各金属のクイックリンク -->
+      <div style="font-size:0.6rem;color:var(--muted);margin-bottom:10px;letter-spacing:0.1em;">クイックリンク</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <a href="https://www.tradingview.com/symbols/XAUUSD/?exchange=OANDA" target="_blank"
+           style="background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;">
+          <div style="font-size:1rem;">🟡</div>
+          <div style="color:var(--gold);font-size:0.7rem;font-weight:600;margin-top:4px;">金</div>
+          <div style="color:var(--muted);font-size:0.58rem;">XAU/USD</div>
+        </a>
+        <a href="https://www.tradingview.com/symbols/XAGUSD/?exchange=OANDA" target="_blank"
+           style="background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;">
+          <div style="font-size:1rem;">⚪</div>
+          <div style="color:var(--silver);font-size:0.7rem;font-weight:600;margin-top:4px;">銀</div>
+          <div style="color:var(--muted);font-size:0.58rem;">XAG/USD</div>
+        </a>
+        <a href="https://www.tradingview.com/symbols/XPTUSD/?exchange=OANDA" target="_blank"
+           style="background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;">
+          <div style="font-size:1rem;">🔵</div>
+          <div style="color:var(--platinum);font-size:0.7rem;font-weight:600;margin-top:4px;">Pt</div>
+          <div style="color:var(--muted);font-size:0.58rem;">XPT/USD</div>
+        </a>
+      </div>
     </div>
-    <div style="font-size:0.6rem;color:var(--muted);margin-top:8px;text-align:center;line-height:1.8;padding:0 4px;">
+
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:10px;text-align:center;line-height:1.8;">
       ✅ TradingView提供のリアルタイムデータ<br>
-      ピンチ操作でズーム・スワイプでスクロール可能
+      ボタンをタップするとSafariでチャートが開きます
     </div>
   </div>
 
@@ -260,7 +311,7 @@ async function fetchPrices(){
     });
     dot.className='status-dot';
     timeEl.textContent=`最終更新: ${new Date().toLocaleTimeString('ja-JP')}`;
-    renderCards(); renderRatios();
+    renderCards(); renderRatios(); renderChart();
     localStorage.setItem('metals_cache',JSON.stringify({prices,ts:Date.now()}));
   }catch(e){
     dot.className='status-dot error';
@@ -332,53 +383,57 @@ function renderRatios(){
 
 // ── チャート ──
 const TV_SYMBOLS = {
-  XAU: 'OANDA:XAUUSD',
-  XAG: 'OANDA:XAGUSD',
-  XPT: 'OANDA:XPTUSD',
+  XAU: { sym:'XAUUSD', name:'金 (XAU/USD)',       color:'var(--gold)',     exchange:'OANDA' },
+  XAG: { sym:'XAGUSD', name:'銀 (XAG/USD)',       color:'var(--silver)',   exchange:'OANDA' },
+  XPT: { sym:'XPTUSD', name:'プラチナ (XPT/USD)', color:'var(--platinum)', exchange:'OANDA' },
 };
 
-// 期間→TradingView range パラメータのマッピング
-const TV_RANGE = {
-  '1W':  '1W',
-  '1M':  '1M',
-  '3M':  '3M',
-  '6M':  '6M',
-  '12M': '12M',
-};
-
+// 期間→TradingViewのfrom日数マッピング
+const TV_PERIOD_DAYS = { '1W':7, '1M':30, '3M':90, '6M':180, '12M':365 };
 let chartPeriod = '3M';
 
-function renderChart(){
-  const symbol = TV_SYMBOLS[chartMetal];
-  const range  = TV_RANGE[chartPeriod] || '3M';
-  // TradingView mini widget iframe URL（シンボルと期間をURLに直接埋め込む）
-  const url = `https://www.tradingview.com/widgetembed/?frameElementId=tradingview-iframe`
-    + `&symbol=${encodeURIComponent(symbol)}`
-    + `&interval=D`
-    + `&range=${range}`
-    + `&theme=dark`
-    + `&style=1`
-    + `&locale=ja`
-    + `&toolbar_bg=%23111118`
-    + `&enable_publishing=false`
-    + `&hide_top_toolbar=false`
-    + `&hide_legend=false`
-    + `&save_image=false`
-    + `&hide_volume=true`
-    + `&withdateranges=true`;
-
-  const iframe = document.getElementById('tradingview-iframe');
-  iframe.src = url;
+function buildChartUrl(symbol, period) {
+  const meta = TV_SYMBOLS[symbol];
+  const days = TV_PERIOD_DAYS[period] || 90;
+  const to = Math.floor(Date.now() / 1000);
+  const from = to - days * 86400;
+  return `https://www.tradingview.com/chart/?symbol=${meta.exchange}%3A${meta.sym}&interval=D&from=${from}&to=${to}`;
 }
 
-function selectChartMetal(symbol, btn){
+function renderChart() {
+  const meta = TV_SYMBOLS[chartMetal];
+  const url  = buildChartUrl(chartMetal, chartPeriod);
+
+  // メタル名・色を更新
+  const label = document.getElementById('chartMetalLabel');
+  if (label) { label.textContent = meta.name; label.style.color = meta.color; }
+
+  // 価格を現在値から表示
+  const p = prices[chartMetal];
+  const priceEl  = document.getElementById('chartPriceVal');
+  const changeEl = document.getElementById('chartChangeVal');
+  if (priceEl && p) {
+    priceEl.textContent = `$${p.price.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    priceEl.style.color = meta.color;
+    const pct = p.changePct || 0;
+    const sign = pct >= 0 ? '+' : '';
+    const col  = pct >= 0 ? 'var(--up)' : 'var(--down)';
+    changeEl.innerHTML = `<span style="color:${col}">${sign}${pct.toFixed(2)}% 本日</span>`;
+  }
+
+  // ボタンのhrefを更新
+  const btn = document.getElementById('chartOpenBtn');
+  if (btn) btn.href = url;
+}
+
+function selectChartMetal(symbol, btn) {
   chartMetal = symbol;
   ['XAU','XAG','XPT'].forEach(s => document.getElementById('cmt'+s).className = 'cmt-btn');
   btn.className = 'cmt-btn ' + {XAU:'active-gold', XAG:'active-silver', XPT:'active-platinum'}[symbol];
   renderChart();
 }
 
-function selectPeriod(period, btn){
+function selectPeriod(period, btn) {
   chartPeriod = period;
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');

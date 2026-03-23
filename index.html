@@ -164,8 +164,20 @@
       <button class="cmt-btn" id="cmtXAG"  onclick="selectChartMetal('XAG',this)">⚪ 銀</button>
       <button class="cmt-btn" id="cmtXPT"  onclick="selectChartMetal('XPT',this)">🔵 プラチナ</button>
     </div>
+    <div class="period-tabs">
+      <button class="period-btn" onclick="selectPeriod('1W',this)">1W</button>
+      <button class="period-btn" onclick="selectPeriod('1M',this)">1M</button>
+      <button class="period-btn active" onclick="selectPeriod('3M',this)">3M</button>
+      <button class="period-btn" onclick="selectPeriod('6M',this)">6M</button>
+      <button class="period-btn" onclick="selectPeriod('12M',this)">1Y</button>
+    </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-      <div id="tradingview-widget" style="height:460px;"></div>
+      <iframe id="tradingview-iframe"
+        src=""
+        style="width:100%;height:460px;border:none;display:block;"
+        allowtransparency="true"
+        scrolling="no">
+      </iframe>
     </div>
     <div style="font-size:0.6rem;color:var(--muted);margin-top:8px;text-align:center;line-height:1.8;padding:0 4px;">
       ✅ TradingView提供のリアルタイムデータ<br>
@@ -319,48 +331,57 @@ function renderRatios(){
 }
 
 // ── チャート ──
-// TradingView シンボルマップ
 const TV_SYMBOLS = {
   XAU: 'OANDA:XAUUSD',
   XAG: 'OANDA:XAGUSD',
   XPT: 'OANDA:XPTUSD',
 };
-const TV_NAMES = {
-  XAU: '金 (XAU/USD)',
-  XAG: '銀 (XAG/USD)',
-  XPT: 'プラチナ (XPT/USD)',
+
+// 期間→TradingView range パラメータのマッピング
+const TV_RANGE = {
+  '1W':  '1W',
+  '1M':  '1M',
+  '3M':  '3M',
+  '6M':  '6M',
+  '12M': '12M',
 };
 
+let chartPeriod = '3M';
+
 function renderChart(){
-  const container = document.getElementById('tradingview-widget');
-  container.innerHTML = '';
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-  script.async = true;
-  script.innerHTML = JSON.stringify({
-    autosize: true,
-    symbol: TV_SYMBOLS[chartMetal],
-    interval: 'D',
-    timezone: 'Asia/Tokyo',
-    theme: 'dark',
-    style: '1',
-    locale: 'ja',
-    backgroundColor: '#111118',
-    gridColor: 'rgba(255,255,255,0.04)',
-    hide_top_toolbar: false,
-    hide_legend: false,
-    save_image: false,
-    calendar: false,
-    hide_volume: true,
-    support_host: 'https://www.tradingview.com'
-  });
-  container.appendChild(script);
+  const symbol = TV_SYMBOLS[chartMetal];
+  const range  = TV_RANGE[chartPeriod] || '3M';
+  // TradingView mini widget iframe URL（シンボルと期間をURLに直接埋め込む）
+  const url = `https://www.tradingview.com/widgetembed/?frameElementId=tradingview-iframe`
+    + `&symbol=${encodeURIComponent(symbol)}`
+    + `&interval=D`
+    + `&range=${range}`
+    + `&theme=dark`
+    + `&style=1`
+    + `&locale=ja`
+    + `&toolbar_bg=%23111118`
+    + `&enable_publishing=false`
+    + `&hide_top_toolbar=false`
+    + `&hide_legend=false`
+    + `&save_image=false`
+    + `&hide_volume=true`
+    + `&withdateranges=true`;
+
+  const iframe = document.getElementById('tradingview-iframe');
+  iframe.src = url;
 }
 
 function selectChartMetal(symbol, btn){
   chartMetal = symbol;
   ['XAU','XAG','XPT'].forEach(s => document.getElementById('cmt'+s).className = 'cmt-btn');
   btn.className = 'cmt-btn ' + {XAU:'active-gold', XAG:'active-silver', XPT:'active-platinum'}[symbol];
+  renderChart();
+}
+
+function selectPeriod(period, btn){
+  chartPeriod = period;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   renderChart();
 }
 

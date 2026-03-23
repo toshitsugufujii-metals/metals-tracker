@@ -158,29 +158,18 @@
 
   <!-- チャートページ -->
   <div class="page" id="page-chart">
-    <div class="section-title">価格チャート</div>
+    <div class="section-title">価格チャート（リアルデータ）</div>
     <div class="chart-metal-tabs">
       <button class="cmt-btn active-gold" id="cmtXAU" onclick="selectChartMetal('XAU',this)">🟡 金</button>
       <button class="cmt-btn" id="cmtXAG"  onclick="selectChartMetal('XAG',this)">⚪ 銀</button>
       <button class="cmt-btn" id="cmtXPT"  onclick="selectChartMetal('XPT',this)">🔵 プラチナ</button>
     </div>
-    <div class="period-tabs">
-      <button class="period-btn" onclick="selectPeriod(7,this)">1W</button>
-      <button class="period-btn" onclick="selectPeriod(30,this)">1M</button>
-      <button class="period-btn active" onclick="selectPeriod(90,this)">3M</button>
-      <button class="period-btn" onclick="selectPeriod(180,this)">6M</button>
-      <button class="period-btn" onclick="selectPeriod(365,this)">1Y</button>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div id="tradingview-widget" style="height:460px;"></div>
     </div>
-    <div class="chart-container">
-      <div class="chart-header">
-        <div class="chart-metal-name" id="chartMetalName" style="color:var(--gold)">金 (XAU)</div>
-        <div class="chart-current">
-          <div class="chart-price-val" id="chartCurrentPrice" style="color:var(--gold)">—</div>
-          <div class="chart-change-val" id="chartPeriodChange">—</div>
-        </div>
-      </div>
-      <div id="chartArea"><div class="chart-loading"><span class="spin-icon">↻</span> 読み込み中...</div></div>
-      <div class="chart-note" id="chartNote"></div>
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:8px;text-align:center;line-height:1.8;padding:0 4px;">
+      ✅ TradingView提供のリアルタイムデータ<br>
+      ピンチ操作でズーム・スワイプでスクロール可能
     </div>
   </div>
 
@@ -234,7 +223,7 @@ const CHART_METALS = {
   XAG:{name:'銀 (XAG)',color:'#a8b4c0'},
   XPT:{name:'プラチナ (XPT)',color:'#7dd3fc'},
 };
-let prices={}, chartMetal='XAU', chartPeriod=90, chartCache={};
+let prices={}, chartMetal='XAU';
 
 // ── 価格取得 ──
 async function fetchMetal(symbol){
@@ -330,101 +319,49 @@ function renderRatios(){
 }
 
 // ── チャート ──
-function buildDemoHistory(symbol, days){
-  const base=prices[symbol]?.price||3000;
-  const vol={XAU:0.008,XAG:0.015,XPT:0.012}[symbol]||0.01;
-  const data=[]; const now=new Date();
-  let p=base*(1-(days/365)*0.06+Math.random()*0.03);
-  for(let i=days;i>=0;i--){
-    const d=new Date(now); d.setDate(d.getDate()-i);
-    if(d.getDay()===0||d.getDay()===6) continue;
-    p=p*(1+(Math.random()-0.48)*vol);
-    data.push({date:d,price:Math.max(p,base*0.4)});
-  }
-  if(data.length>0) data[data.length-1].price=base;
-  return data;
-}
+// TradingView シンボルマップ
+const TV_SYMBOLS = {
+  XAU: 'OANDA:XAUUSD',
+  XAG: 'OANDA:XAGUSD',
+  XPT: 'OANDA:XPTUSD',
+};
+const TV_NAMES = {
+  XAU: '金 (XAU/USD)',
+  XAG: '銀 (XAG/USD)',
+  XPT: 'プラチナ (XPT/USD)',
+};
 
-async function renderChart(){
-  const area=document.getElementById('chartArea');
-  area.innerHTML='<div class="chart-loading"><span class="spin-icon">↻</span> 読み込み中...</div>';
-  const meta=CHART_METALS[chartMetal];
-  document.getElementById('chartMetalName').textContent=meta.name;
-  document.getElementById('chartMetalName').style.color=meta.color;
-  document.getElementById('chartCurrentPrice').style.color=meta.color;
-
-  const key=`${chartMetal}_${chartPeriod}`;
-  if(!chartCache[key]) chartCache[key]=buildDemoHistory(chartMetal,chartPeriod);
-  const data=chartCache[key];
-
-  const first=data[0].price, last=data[data.length-1].price;
-  const pct=((last-first)/first*100).toFixed(2);
-  const sign=pct>0?'+':'', col=pct>0?'var(--up)':pct<0?'var(--down)':'var(--muted)';
-  document.getElementById('chartCurrentPrice').textContent=`$${last.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-  document.getElementById('chartPeriodChange').innerHTML=`<span style="color:${col}">${sign}${pct}% (${chartPeriod}日間)</span>`;
-
-  area.innerHTML='<canvas id="priceChart"></canvas>';
-  const canvas=document.getElementById('priceChart');
-  const ctx=canvas.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const cssW=canvas.parentElement.clientWidth-24, cssH=200;
-  canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
-  canvas.width=cssW*dpr; canvas.height=cssH*dpr;
-  ctx.scale(dpr,dpr);
-
-  const pad={top:10,right:8,bottom:32,left:52};
-  const w=cssW-pad.left-pad.right, h=cssH-pad.top-pad.bottom;
-  const ps=data.map(d=>d.price);
-  const minP=Math.min(...ps)*0.997, maxP=Math.max(...ps)*1.003;
-  const xOf=i=>pad.left+(i/(data.length-1))*w;
-  const yOf=p=>pad.top+h-((p-minP)/(maxP-minP))*h;
-
-  // グリッド＆Y軸ラベル
-  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
-  for(let j=0;j<=4;j++){
-    const y=pad.top+(h/4)*j;
-    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+w,y); ctx.stroke();
-    const val=maxP-(maxP-minP)*(j/4);
-    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='9px monospace'; ctx.textAlign='right';
-    ctx.fillText('$'+val.toFixed(0),pad.left-4,y+4);
-  }
-
-  // グラデーション
-  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+h);
-  grad.addColorStop(0,meta.color+'55'); grad.addColorStop(1,meta.color+'00');
-  ctx.beginPath();
-  ctx.moveTo(xOf(0),yOf(data[0].price));
-  data.forEach((d,i)=>{if(i>0)ctx.lineTo(xOf(i),yOf(d.price));});
-  ctx.lineTo(xOf(data.length-1),pad.top+h); ctx.lineTo(xOf(0),pad.top+h);
-  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
-
-  // ライン
-  ctx.beginPath(); ctx.strokeStyle=meta.color; ctx.lineWidth=2; ctx.lineJoin='round';
-  data.forEach((d,i)=>{i===0?ctx.moveTo(xOf(i),yOf(d.price)):ctx.lineTo(xOf(i),yOf(d.price));});
-  ctx.stroke();
-
-  // X軸ラベル
-  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='9px monospace'; ctx.textAlign='center';
-  [0,Math.floor(data.length/3),Math.floor(data.length*2/3),data.length-1].forEach(i=>{
-    const d=data[i];
-    ctx.fillText(`${d.date.getMonth()+1}/${d.date.getDate()}`,xOf(i),cssH-pad.bottom+14);
+function renderChart(){
+  const container = document.getElementById('tradingview-widget');
+  container.innerHTML = '';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: TV_SYMBOLS[chartMetal],
+    interval: 'D',
+    timezone: 'Asia/Tokyo',
+    theme: 'dark',
+    style: '1',
+    locale: 'ja',
+    backgroundColor: '#111118',
+    gridColor: 'rgba(255,255,255,0.04)',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    calendar: false,
+    hide_volume: true,
+    support_host: 'https://www.tradingview.com'
   });
-
-  document.getElementById('chartNote').innerHTML=
-    '※ チャートはデモ表示です（推移の形は参考値）<br>現在値はGoldAPI.ioより取得';
+  container.appendChild(script);
 }
 
-function selectChartMetal(symbol,btn){
-  chartMetal=symbol;
-  ['XAU','XAG','XPT'].forEach(s=>document.getElementById('cmt'+s).className='cmt-btn');
-  btn.className='cmt-btn '+{XAU:'active-gold',XAG:'active-silver',XPT:'active-platinum'}[symbol];
+function selectChartMetal(symbol, btn){
+  chartMetal = symbol;
+  ['XAU','XAG','XPT'].forEach(s => document.getElementById('cmt'+s).className = 'cmt-btn');
+  btn.className = 'cmt-btn ' + {XAU:'active-gold', XAG:'active-silver', XPT:'active-platinum'}[symbol];
   renderChart();
-}
-
-function selectPeriod(days,btn){
-  chartPeriod=days; chartCache={};
-  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderChart();
 }
 
 // ── タブ切替 ──

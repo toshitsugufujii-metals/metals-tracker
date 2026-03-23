@@ -14,351 +14,126 @@
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #0a0a0f;
-      --surface:   #111118;
-      --border:    rgba(255,255,255,0.07);
-      --gold:      #d4a843;
-      --gold-dim:  #8a6820;
-      --silver:    #a8b4c0;
-      --platinum:  #7dd3fc;
-      --palladium: #c084fc;
-      --rhodium:   #86efac;
-      --text:      #f0ece4;
-      --muted:     #6b6b7a;
-      --up:        #4ade80;
-      --down:      #f87171;
-      --radius:    16px;
+      --bg:#0a0a0f; --surface:#111118; --border:rgba(255,255,255,0.07);
+      --gold:#d4a843; --silver:#a8b4c0; --platinum:#7dd3fc; --palladium:#c084fc;
+      --text:#f0ece4; --muted:#6b6b7a; --up:#4ade80; --down:#f87171; --radius:16px;
     }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;}
 
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;}
+    .header-left h1{font-family:'Shippori Mincho',serif;font-size:1.15rem;font-weight:700;letter-spacing:0.05em;color:var(--gold);}
+    .header-left .subtitle{font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;margin-top:2px;}
+    .refresh-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+    .refresh-btn:active{transform:scale(0.9);color:var(--gold);}
+    .refresh-btn.spinning{animation:spin 1s linear infinite;color:var(--gold);}
+    @keyframes spin{to{transform:rotate(360deg);}}
 
-    body {
-      font-family: 'DM Mono', monospace;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      overflow-x: hidden;
-    }
+    .update-bar{padding:6px 20px;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--up);animation:pulse 2s ease-in-out infinite;}
+    .status-dot.error{background:var(--down);animation:none;}
+    .status-dot.loading{background:var(--gold);}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-    /* ── 背景グレイン ── */
-    body::before {
-      content:'';
-      position:fixed; inset:0; z-index:0; pointer-events:none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: 0.4;
-    }
+    main{padding:16px 16px 100px;position:relative;z-index:1;}
+    .section-title{font-size:0.6rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin:20px 4px 10px;}
 
-    /* ── ヘッダー ── */
-    header {
-      position: sticky; top:0; z-index:100;
-      background: rgba(10,10,15,0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px 12px;
-      display: flex; align-items:center; justify-content:space-between;
-    }
+    .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .metal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;transition:all 0.2s;position:relative;overflow:hidden;}
+    .metal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0.8;}
+    .metal-card.gold::before{background:var(--gold);}
+    .metal-card.silver::before{background:var(--silver);}
+    .metal-card.platinum::before{background:var(--platinum);}
+    .metal-card.palladium::before{background:var(--palladium);}
+    .metal-card:active{transform:scale(0.97);}
+    .card-symbol{font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:6px;}
+    .card-name{font-family:'Shippori Mincho',serif;font-size:0.85rem;font-weight:600;margin-bottom:10px;}
+    .metal-card.gold .card-name{color:var(--gold);}
+    .metal-card.silver .card-name{color:var(--silver);}
+    .metal-card.platinum .card-name{color:var(--platinum);}
+    .metal-card.palladium .card-name{color:var(--palladium);}
+    .card-price{font-size:1.25rem;font-weight:500;letter-spacing:-0.02em;margin-bottom:4px;line-height:1;}
+    .card-price .currency{font-size:0.65rem;color:var(--muted);margin-right:2px;}
+    .card-jpy{font-size:0.7rem;color:var(--muted);margin-bottom:8px;}
+    .card-change{font-size:0.7rem;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-block;}
+    .card-change.up{background:rgba(74,222,128,0.12);color:var(--up);}
+    .card-change.down{background:rgba(248,113,113,0.12);color:var(--down);}
+    .card-change.flat{background:rgba(107,107,122,0.2);color:var(--muted);}
 
-    .header-left h1 {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: var(--gold);
-    }
-    .header-left .subtitle {
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      margin-top: 2px;
-    }
+    .skeleton{background:linear-gradient(90deg,var(--surface) 25%,rgba(255,255,255,0.04) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;}
+    @keyframes shimmer{to{background-position:-200% 0;}}
 
-    .refresh-btn {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--muted);
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex; align-items:center; justify-content:center;
-      transition: all 0.2s;
-    }
-    .refresh-btn:active { transform: scale(0.9); color: var(--gold); }
-    .refresh-btn.spinning { animation: spin 1s linear infinite; color: var(--gold); }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .ratio-cards{display:flex;flex-direction:column;gap:10px;}
+    .ratio-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+    .ratio-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+    .ratio-title{font-family:'Shippori Mincho',serif;font-size:0.9rem;font-weight:600;}
+    .ratio-value{font-size:1.4rem;font-weight:500;letter-spacing:-0.02em;}
+    .ratio-sub{font-size:0.62rem;color:var(--muted);margin-top:2px;}
+    .gauge-wrap{margin-top:10px;}
+    .gauge-labels{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);margin-bottom:5px;}
+    .gauge-track{height:6px;border-radius:3px;position:relative;overflow:visible;}
+    .gauge-needle{position:absolute;top:50%;transform:translate(-50%,-50%);width:3px;height:14px;background:white;border-radius:2px;box-shadow:0 0 6px rgba(255,255,255,0.6);}
+    .gauge-verdict{font-size:0.68rem;font-weight:500;margin-top:8px;padding:4px 10px;border-radius:20px;display:inline-block;}
+    .verdict-buy{background:rgba(74,222,128,0.12);color:var(--up);}
+    .verdict-hold{background:rgba(234,179,8,0.12);color:#eab308;}
+    .verdict-sell{background:rgba(248,113,113,0.12);color:var(--down);}
 
-    /* ── 更新時刻バー ── */
-    .update-bar {
-      padding: 6px 20px;
-      font-size: 0.62rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items:center; gap:6px;
-    }
-    .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--up);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    .status-dot.error { background: var(--down); animation: none; }
-    .status-dot.loading { background: var(--gold); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    /* ── チャートページ ── */
+    .chart-metal-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+    .chart-metal-tabs::-webkit-scrollbar{display:none;}
+    .cmt-btn{padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.75rem;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+    .cmt-btn.active-gold{background:rgba(212,168,67,0.15);border-color:var(--gold);color:var(--gold);}
+    .cmt-btn.active-silver{background:rgba(168,180,192,0.15);border-color:var(--silver);color:var(--silver);}
+    .cmt-btn.active-platinum{background:rgba(125,211,252,0.15);border-color:var(--platinum);color:var(--platinum);}
+    .period-tabs{display:flex;gap:6px;margin-bottom:16px;}
+    .period-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.7rem;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
+    .period-btn.active{background:var(--surface);border-color:rgba(255,255,255,0.2);color:var(--text);}
+    .chart-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 12px 12px;position:relative;}
+    .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+    .chart-metal-name{font-family:'Shippori Mincho',serif;font-size:1rem;font-weight:600;}
+    .chart-current{text-align:right;}
+    .chart-price-val{font-size:1.1rem;font-weight:500;}
+    .chart-change-val{font-size:0.7rem;margin-top:2px;}
+    .chart-loading{display:flex;align-items:center;justify-content:center;height:180px;color:var(--muted);font-size:0.8rem;gap:8px;}
+    .spin-icon{animation:spin 1s linear infinite;display:inline-block;}
+    .chart-note{font-size:0.6rem;color:var(--muted);margin-top:8px;text-align:center;line-height:1.6;}
 
-    /* ── メインコンテンツ ── */
-    main { padding: 16px 16px 100px; position:relative; z-index:1; }
+    .tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+    .tab-item{flex:1;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--muted);font-size:0.55rem;letter-spacing:0.08em;transition:color 0.2s;}
+    .tab-item.active{color:var(--gold);}
+    .tab-icon{font-size:1.2rem;}
 
-    /* ── セクションタイトル ── */
-    .section-title {
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin: 20px 4px 10px;
-    }
+    .page{display:none;}
+    .page.active{display:block;}
+    .error-banner{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:10px;padding:12px 14px;font-size:0.75rem;color:var(--down);margin-bottom:12px;display:none;}
+    .error-banner.show{display:block;}
 
-    /* ── 価格カード ── */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
+    .info-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+    .info-section h3{font-family:'Shippori Mincho',serif;font-size:0.9rem;color:var(--gold);margin-bottom:10px;}
+    .info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.72rem;}
+    .info-row:last-child{border-bottom:none;}
+    .info-label{color:var(--muted);}
 
-    .metal-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .metal-card::before {
-      content:'';
-      position:absolute; top:0; left:0; right:0; height:2px;
-      opacity: 0.8;
-    }
-    .metal-card.gold::before   { background: var(--gold); }
-    .metal-card.silver::before { background: var(--silver); }
-    .metal-card.platinum::before { background: var(--platinum); }
-    .metal-card.palladium::before { background: var(--palladium); }
-    .metal-card.rhodium::before { background: var(--rhodium); }
-    .metal-card:active { transform: scale(0.97); }
-
-    .card-symbol {
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .card-name {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .metal-card.gold    .card-name { color: var(--gold); }
-    .metal-card.silver  .card-name { color: var(--silver); }
-    .metal-card.platinum .card-name { color: var(--platinum); }
-    .metal-card.palladium .card-name { color: var(--palladium); }
-    .metal-card.rhodium  .card-name { color: var(--rhodium); }
-
-    .card-price {
-      font-size: 1.25rem;
-      font-weight: 500;
-      letter-spacing: -0.02em;
-      margin-bottom: 4px;
-      line-height: 1;
-    }
-    .card-price .currency {
-      font-size: 0.65rem;
-      color: var(--muted);
-      margin-right: 2px;
-    }
-    .card-jpy {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .card-change {
-      font-size: 0.7rem;
-      font-weight: 500;
-      padding: 3px 8px;
-      border-radius: 20px;
-      display: inline-block;
-    }
-    .card-change.up   { background: rgba(74,222,128,0.12); color: var(--up); }
-    .card-change.down { background: rgba(248,113,113,0.12); color: var(--down); }
-    .card-change.flat { background: rgba(107,107,122,0.2); color: var(--muted); }
-
-    /* ── スケルトン ── */
-    .skeleton {
-      background: linear-gradient(90deg, var(--surface) 25%, rgba(255,255,255,0.04) 50%, var(--surface) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 6px;
-    }
-    @keyframes shimmer { to { background-position: -200% 0; } }
-
-    /* ── 比率セクション ── */
-    .ratio-cards { display: flex; flex-direction: column; gap: 10px; }
-
-    .ratio-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-    }
-    .ratio-header {
-      display: flex; justify-content:space-between; align-items:flex-start;
-      margin-bottom: 12px;
-    }
-    .ratio-title {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    .ratio-value {
-      font-size: 1.4rem;
-      font-weight: 500;
-      letter-spacing: -0.02em;
-    }
-    .ratio-sub { font-size: 0.62rem; color: var(--muted); margin-top: 2px; }
-
-    /* ゲージ */
-    .gauge-wrap { margin-top: 10px; }
-    .gauge-labels {
-      display: flex; justify-content:space-between;
-      font-size: 0.58rem; color: var(--muted); margin-bottom: 5px;
-    }
-    .gauge-track {
-      height: 6px; border-radius: 3px; position: relative;
-      overflow: visible;
-    }
-    .gauge-fill { height: 100%; border-radius: 3px; }
-    .gauge-needle {
-      position: absolute; top: 50%; transform: translate(-50%,-50%);
-      width: 3px; height: 14px; background: white;
-      border-radius: 2px; box-shadow: 0 0 6px rgba(255,255,255,0.6);
-    }
-    .gauge-verdict {
-      font-size: 0.68rem; font-weight: 500;
-      margin-top: 8px; padding: 4px 10px;
-      border-radius: 20px; display: inline-block;
-    }
-    .verdict-buy  { background: rgba(74,222,128,0.12); color: var(--up); }
-    .verdict-hold { background: rgba(234,179,8,0.12);  color: #eab308; }
-    .verdict-sell { background: rgba(248,113,113,0.12); color: var(--down); }
-
-    /* ── タブバー ── */
-    .tab-bar {
-      position: fixed; bottom: 0; left:0; right:0; z-index:100;
-      background: rgba(10,10,15,0.92);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      display: flex;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .tab-item {
-      flex: 1; padding: 10px 0 8px;
-      display: flex; flex-direction:column; align-items:center; gap:3px;
-      cursor: pointer; color: var(--muted);
-      font-size: 0.55rem; letter-spacing: 0.08em;
-      transition: color 0.2s;
-    }
-    .tab-item.active { color: var(--gold); }
-    .tab-icon { font-size: 1.2rem; }
-
-    /* ── ページ切替 ── */
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* ── エラーバナー ── */
-    .error-banner {
-      background: rgba(248,113,113,0.1);
-      border: 1px solid rgba(248,113,113,0.3);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 0.75rem;
-      color: var(--down);
-      margin-bottom: 12px;
-      display: none;
-    }
-    .error-banner.show { display: block; }
-
-    /* ── 情報ページ ── */
-    .info-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 10px;
-    }
-    .info-section h3 {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 0.9rem;
-      color: var(--gold);
-      margin-bottom: 10px;
-    }
-    .info-row {
-      display: flex; justify-content:space-between;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.72rem;
-    }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: var(--muted); }
-    .info-val { font-weight: 500; }
-
-    /* ── ローディング画面 ── */
-    #splash {
-      position: fixed; inset:0; z-index:999;
-      background: var(--bg);
-      display: flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:16px;
-    }
-    .splash-logo {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 2rem; color: var(--gold);
-      letter-spacing: 0.1em;
-    }
-    .splash-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.2em; }
-    .splash-bar {
-      width: 120px; height: 2px;
-      background: var(--border);
-      border-radius: 1px;
-      overflow: hidden;
-    }
-    .splash-fill {
-      height: 100%; background: var(--gold);
-      animation: load 1.5s ease forwards;
-    }
-    @keyframes load { from{width:0} to{width:100%} }
-    #splash.hidden {
-      opacity:0; pointer-events:none;
-      transition: opacity 0.4s;
-    }
-
-    /* フェードイン */
-    .fade-in {
-      animation: fadeIn 0.4s ease forwards;
-    }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    #splash{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+    .splash-logo{font-family:'Shippori Mincho',serif;font-size:2rem;color:var(--gold);letter-spacing:0.1em;}
+    .splash-sub{font-size:0.65rem;color:var(--muted);letter-spacing:0.2em;}
+    .splash-bar{width:120px;height:2px;background:var(--border);border-radius:1px;overflow:hidden;}
+    .splash-fill{height:100%;background:var(--gold);animation:load 1.5s ease forwards;}
+    @keyframes load{from{width:0}to{width:100%}}
+    #splash.hidden{opacity:0;pointer-events:none;transition:opacity 0.4s;}
+    .fade-in{animation:fadeIn 0.4s ease forwards;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   </style>
 </head>
 <body>
 
-<!-- スプラッシュ画面 -->
 <div id="splash">
   <div class="splash-logo">貴金属</div>
   <div class="splash-sub">PRECIOUS METALS TRACKER</div>
   <div class="splash-bar"><div class="splash-fill"></div></div>
 </div>
 
-<!-- ヘッダー -->
 <header>
   <div class="header-left">
     <h1>貴金属トラッカー</h1>
@@ -366,27 +141,46 @@
   </div>
   <button class="refresh-btn" id="refreshBtn" onclick="fetchPrices()" title="更新">↻</button>
 </header>
-
-<!-- 更新時刻 -->
 <div class="update-bar">
   <div class="status-dot" id="statusDot"></div>
   <span id="updateTime">読み込み中...</span>
 </div>
 
-<!-- メイン -->
 <main>
   <!-- 価格ページ -->
   <div class="page active" id="page-prices">
     <div class="error-banner" id="errorBanner"></div>
-
     <div class="section-title">スポット価格 / USD per oz</div>
-    <div class="cards-grid" id="cardsGrid">
-      <!-- JS で生成 -->
-    </div>
-
+    <div class="cards-grid" id="cardsGrid"></div>
     <div class="section-title">比率分析</div>
-    <div class="ratio-cards" id="ratioCards">
-      <!-- JS で生成 -->
+    <div class="ratio-cards" id="ratioCards"></div>
+  </div>
+
+  <!-- チャートページ -->
+  <div class="page" id="page-chart">
+    <div class="section-title">価格チャート</div>
+    <div class="chart-metal-tabs">
+      <button class="cmt-btn active-gold" id="cmtXAU" onclick="selectChartMetal('XAU',this)">🟡 金</button>
+      <button class="cmt-btn" id="cmtXAG"  onclick="selectChartMetal('XAG',this)">⚪ 銀</button>
+      <button class="cmt-btn" id="cmtXPT"  onclick="selectChartMetal('XPT',this)">🔵 プラチナ</button>
+    </div>
+    <div class="period-tabs">
+      <button class="period-btn" onclick="selectPeriod(7,this)">1W</button>
+      <button class="period-btn" onclick="selectPeriod(30,this)">1M</button>
+      <button class="period-btn active" onclick="selectPeriod(90,this)">3M</button>
+      <button class="period-btn" onclick="selectPeriod(180,this)">6M</button>
+      <button class="period-btn" onclick="selectPeriod(365,this)">1Y</button>
+    </div>
+    <div class="chart-container">
+      <div class="chart-header">
+        <div class="chart-metal-name" id="chartMetalName" style="color:var(--gold)">金 (XAU)</div>
+        <div class="chart-current">
+          <div class="chart-price-val" id="chartCurrentPrice" style="color:var(--gold)">—</div>
+          <div class="chart-change-val" id="chartPeriodChange">—</div>
+        </div>
+      </div>
+      <div id="chartArea"><div class="chart-loading"><span class="spin-icon">↻</span> 読み込み中...</div></div>
+      <div class="chart-note" id="chartNote"></div>
     </div>
   </div>
 
@@ -395,312 +189,275 @@
     <div class="section-title">アプリについて</div>
     <div class="info-section">
       <h3>📊 データソース</h3>
-      <div class="info-row"><span class="info-label">API</span><span class="info-val">GoldAPI.io</span></div>
-      <div class="info-row"><span class="info-label">更新頻度</span><span class="info-val">起動時・手動更新</span></div>
-      <div class="info-row"><span class="info-label">通貨</span><span class="info-val">USD / JPY換算</span></div>
-      <div class="info-row"><span class="info-label">対象金属</span><span class="info-val">金・銀・Pt・Pd</span></div>
+      <div class="info-row"><span class="info-label">API</span><span>GoldAPI.io</span></div>
+      <div class="info-row"><span class="info-label">更新頻度</span><span>起動時・手動更新</span></div>
+      <div class="info-row"><span class="info-label">通貨</span><span>USD / JPY換算</span></div>
+      <div class="info-row"><span class="info-label">対象金属</span><span>金・銀・Pt・Pd</span></div>
     </div>
-
     <div class="section-title">比率の見方</div>
     <div class="info-section">
       <h3>⚖️ 金銀比率 (GSR)</h3>
-      <div class="info-row"><span class="info-label">80以上</span><span class="info-val" style="color:var(--up)">銀が割安 🟢</span></div>
-      <div class="info-row"><span class="info-label">50〜80</span><span class="info-val" style="color:#eab308">適正水準 🟡</span></div>
-      <div class="info-row"><span class="info-label">50未満</span><span class="info-val" style="color:var(--down)">銀が割高 🔴</span></div>
+      <div class="info-row"><span class="info-label">80以上</span><span style="color:var(--up)">銀が割安 🟢</span></div>
+      <div class="info-row"><span class="info-label">50〜80</span><span style="color:#eab308">適正水準 🟡</span></div>
+      <div class="info-row"><span class="info-label">50未満</span><span style="color:var(--down)">銀が割高 🔴</span></div>
     </div>
     <div class="info-section">
       <h3>💎 金プラチナ比率 (GPR)</h3>
-      <div class="info-row"><span class="info-label">2.0以上</span><span class="info-val" style="color:var(--up)">Ptが歴史的割安 🟢</span></div>
-      <div class="info-row"><span class="info-label">1.0〜2.0</span><span class="info-val" style="color:#eab308">適正水準 🟡</span></div>
-      <div class="info-row"><span class="info-label">1.0未満</span><span class="info-val" style="color:var(--down)">Ptが割高 🔴</span></div>
+      <div class="info-row"><span class="info-label">2.0以上</span><span style="color:var(--up)">Ptが歴史的割安 🟢</span></div>
+      <div class="info-row"><span class="info-label">1.0〜2.0</span><span style="color:#eab308">適正水準 🟡</span></div>
+      <div class="info-row"><span class="info-label">1.0未満</span><span style="color:var(--down)">Ptが割高 🔴</span></div>
     </div>
-
     <div class="info-section">
       <h3>⚠️ 免責事項</h3>
-      <div style="font-size:0.7rem;color:var(--muted);line-height:1.7">
-        このアプリは情報提供のみを目的としており、投資推奨ではありません。
-        投資判断はご自身の責任で行ってください。
-      </div>
+      <div style="font-size:0.7rem;color:var(--muted);line-height:1.7">このアプリは情報提供のみを目的としており、投資推奨ではありません。投資判断はご自身の責任で行ってください。</div>
     </div>
   </div>
 </main>
 
-<!-- タブバー -->
 <div class="tab-bar">
-  <div class="tab-item active" onclick="switchTab('prices', this)">
-    <span class="tab-icon">📈</span>
-    <span>価格</span>
-  </div>
-  <div class="tab-item" onclick="switchTab('info', this)">
-    <span class="tab-icon">ℹ️</span>
-    <span>情報</span>
-  </div>
+  <div class="tab-item active" onclick="switchTab('prices',this)"><span class="tab-icon">📈</span><span>価格</span></div>
+  <div class="tab-item" onclick="switchTab('chart',this)"><span class="tab-icon">📊</span><span>チャート</span></div>
+  <div class="tab-item" onclick="switchTab('info',this)"><span class="tab-icon">ℹ️</span><span>情報</span></div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-//  設定
-// ══════════════════════════════════════════
 const API_KEY = 'goldapi-b5yismn2fhb7x-io';
-const USD_JPY = 149.5; // 為替レート（手動更新 or 後で自動化）
-
+const USD_JPY = 149.5;
 const METALS = [
-  { id:'XAU', symbol:'XAU', name:'金',       cls:'gold',      color:'#d4a843' },
-  { id:'XAG', symbol:'XAG', name:'銀',       cls:'silver',    color:'#a8b4c0' },
-  { id:'XPT', symbol:'XPT', name:'プラチナ', cls:'platinum',  color:'#7dd3fc' },
-  { id:'XPD', symbol:'XPD', name:'パラジウム',cls:'palladium', color:'#c084fc' },
+  {id:'XAU',symbol:'XAU',name:'金',cls:'gold',color:'#d4a843'},
+  {id:'XAG',symbol:'XAG',name:'銀',cls:'silver',color:'#a8b4c0'},
+  {id:'XPT',symbol:'XPT',name:'プラチナ',cls:'platinum',color:'#7dd3fc'},
+  {id:'XPD',symbol:'XPD',name:'パラジウム',cls:'palladium',color:'#c084fc'},
 ];
+const CHART_METALS = {
+  XAU:{name:'金 (XAU)',color:'#d4a843'},
+  XAG:{name:'銀 (XAG)',color:'#a8b4c0'},
+  XPT:{name:'プラチナ (XPT)',color:'#7dd3fc'},
+};
+let prices={}, chartMetal='XAU', chartPeriod=90, chartCache={};
 
-let prices = {};
-let lastUpdate = null;
-
-// ══════════════════════════════════════════
-//  API取得
-// ══════════════════════════════════════════
-async function fetchMetal(symbol) {
-  const url = `https://www.goldapi.io/api/${symbol}/USD`;
-  const res = await fetch(url, {
-    headers: {
-      'x-access-token': API_KEY,
-      'Content-Type': 'application/json'
-    }
+// ── 価格取得 ──
+async function fetchMetal(symbol){
+  const res=await fetch(`https://www.goldapi.io/api/${symbol}/USD`,{
+    headers:{'x-access-token':API_KEY,'Content-Type':'application/json'}
   });
-  if (!res.ok) throw new Error(`${symbol}: HTTP ${res.status}`);
+  if(!res.ok) throw new Error(`${symbol}: HTTP ${res.status}`);
   return res.json();
 }
 
-async function fetchPrices() {
-  const btn = document.getElementById('refreshBtn');
-  const dot  = document.getElementById('statusDot');
-  const timeEl = document.getElementById('updateTime');
-  const errBanner = document.getElementById('errorBanner');
-
-  btn.classList.add('spinning');
-  dot.className = 'status-dot loading';
-  timeEl.textContent = '更新中...';
-  errBanner.classList.remove('show');
-
-  try {
-    // 並列取得
-    const results = await Promise.all(METALS.map(m => fetchMetal(m.id)));
-
-    results.forEach((data, i) => {
-      const m = METALS[i];
-      prices[m.id] = {
-        price:  data.price,
-        open:   data.open_price || data.price,
-        change: data.ch  || 0,
-        changePct: data.chp || 0,
-      };
+async function fetchPrices(){
+  const btn=document.getElementById('refreshBtn');
+  const dot=document.getElementById('statusDot');
+  const timeEl=document.getElementById('updateTime');
+  const err=document.getElementById('errorBanner');
+  btn.classList.add('spinning'); dot.className='status-dot loading';
+  timeEl.textContent='更新中...'; err.classList.remove('show');
+  try{
+    const results=await Promise.all(METALS.map(m=>fetchMetal(m.id)));
+    results.forEach((data,i)=>{
+      prices[METALS[i].id]={price:data.price,open:data.open_price||data.price,change:data.ch||0,changePct:data.chp||0};
     });
-
-    lastUpdate = new Date();
-    dot.className = 'status-dot';
-    timeEl.textContent = `最終更新: ${lastUpdate.toLocaleTimeString('ja-JP')}`;
-    renderCards();
-    renderRatios();
-
-    // キャッシュ保存
-    localStorage.setItem('metals_cache', JSON.stringify({ prices, ts: Date.now() }));
-
-  } catch(err) {
-    dot.className = 'status-dot error';
-    timeEl.textContent = '取得失敗 — キャッシュを表示中';
-    errBanner.textContent = `⚠️ 価格の取得に失敗しました: ${err.message}`;
-    errBanner.classList.add('show');
-
-    // キャッシュから読み込み
-    const cached = localStorage.getItem('metals_cache');
-    if (cached) {
-      const data = JSON.parse(cached);
-      prices = data.prices;
-      const cacheDate = new Date(data.ts);
-      timeEl.textContent = `キャッシュ表示: ${cacheDate.toLocaleDateString('ja-JP')} ${cacheDate.toLocaleTimeString('ja-JP')}`;
-      renderCards();
-      renderRatios();
+    dot.className='status-dot';
+    timeEl.textContent=`最終更新: ${new Date().toLocaleTimeString('ja-JP')}`;
+    renderCards(); renderRatios();
+    localStorage.setItem('metals_cache',JSON.stringify({prices,ts:Date.now()}));
+  }catch(e){
+    dot.className='status-dot error';
+    err.textContent=`⚠️ 取得失敗: ${e.message}`; err.classList.add('show');
+    const cached=localStorage.getItem('metals_cache');
+    if(cached){
+      const d=JSON.parse(cached); prices=d.prices;
+      const cd=new Date(d.ts);
+      timeEl.textContent=`キャッシュ: ${cd.toLocaleDateString('ja-JP')} ${cd.toLocaleTimeString('ja-JP')}`;
+      renderCards(); renderRatios();
     }
   }
-
   btn.classList.remove('spinning');
 }
 
-// ══════════════════════════════════════════
-//  カード描画
-// ══════════════════════════════════════════
-function renderCards() {
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = '';
-
-  METALS.forEach(m => {
-    const d = prices[m.id];
-    if (!d) return;
-
-    const pct = d.changePct || 0;
-    const chg = d.change || 0;
-    const chgCls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-    const chgSign = pct > 0 ? '+' : '';
-    const jpyPrice = (d.price * USD_JPY).toLocaleString('ja-JP', {maximumFractionDigits:0});
-
-    grid.innerHTML += `
+// ── カード描画 ──
+function renderCards(){
+  const grid=document.getElementById('cardsGrid'); grid.innerHTML='';
+  METALS.forEach(m=>{
+    const d=prices[m.id]; if(!d) return;
+    const pct=d.changePct||0, sign=pct>0?'+':'', cls=pct>0?'up':pct<0?'down':'flat';
+    const jpy=(d.price*USD_JPY).toLocaleString('ja-JP',{maximumFractionDigits:0});
+    grid.innerHTML+=`
       <div class="metal-card ${m.cls} fade-in">
         <div class="card-symbol">${m.symbol}</div>
         <div class="card-name">${m.name}</div>
-        <div class="card-price">
-          <span class="currency">$</span>${d.price.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2})}
-        </div>
-        <div class="card-jpy">¥${jpyPrice}/oz</div>
-        <span class="card-change ${chgCls}">${chgSign}${pct.toFixed(2)}%</span>
-      </div>
-    `;
+        <div class="card-price"><span class="currency">$</span>${d.price.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="card-jpy">¥${jpy}/oz</div>
+        <span class="card-change ${cls}">${sign}${pct.toFixed(2)}%</span>
+      </div>`;
   });
 }
 
-// ══════════════════════════════════════════
-//  比率描画
-// ══════════════════════════════════════════
-function renderRatios() {
-  const container = document.getElementById('ratioCards');
-  container.innerHTML = '';
-
-  const gold = prices['XAU']?.price;
-  const silver = prices['XAG']?.price;
-  const platinum = prices['XPT']?.price;
-  const palladium = prices['XPD']?.price;
-
-  if (!gold || !silver || !platinum) return;
-
-  // GSR
-  const gsr = gold / silver;
-  let gsrVerdict, gsrVCls;
-  if (gsr >= 80)      { gsrVerdict='🟢 銀が割安 — 買いシグナル'; gsrVCls='verdict-buy'; }
-  else if (gsr >= 50) { gsrVerdict='🟡 適正水準 — 様子見';       gsrVCls='verdict-hold'; }
-  else                { gsrVerdict='🔴 銀が割高 — 注意';          gsrVCls='verdict-sell'; }
-  const gsrPct = Math.min(100, Math.max(0, (gsr - 15) / (135 - 15) * 100));
-
-  // GPR
-  const gpr = gold / platinum;
-  let gprVerdict, gprVCls;
-  if (gpr >= 2.0)      { gprVerdict='🟢 Ptが歴史的割安 — 買いシグナル'; gprVCls='verdict-buy'; }
-  else if (gpr >= 1.0) { gprVerdict='🟡 適正水準 — 様子見';             gprVCls='verdict-hold'; }
-  else                 { gprVerdict='🔴 Ptが割高 — 注意';               gprVCls='verdict-sell'; }
-  const gprPct = Math.min(100, Math.max(0, (gpr - 0.1) / (3.5 - 0.1) * 100));
-
-  container.innerHTML = `
+// ── 比率描画 ──
+function renderRatios(){
+  const c=document.getElementById('ratioCards'); c.innerHTML='';
+  const g=prices['XAU']?.price, s=prices['XAG']?.price, p=prices['XPT']?.price, pd=prices['XPD']?.price;
+  if(!g||!s||!p) return;
+  const gsr=g/s, gpr=g/p;
+  let gsrV,gsrC; if(gsr>=80){gsrV='🟢 銀が割安 — 買いシグナル';gsrC='verdict-buy';}else if(gsr>=50){gsrV='🟡 適正水準';gsrC='verdict-hold';}else{gsrV='🔴 銀が割高';gsrC='verdict-sell';}
+  let gprV,gprC; if(gpr>=2.0){gprV='🟢 Ptが歴史的割安 — 買いシグナル';gprC='verdict-buy';}else if(gpr>=1.0){gprV='🟡 適正水準';gprC='verdict-hold';}else{gprV='🔴 Ptが割高';gprC='verdict-sell';}
+  const gsrPct=Math.min(100,Math.max(0,(gsr-15)/(135-15)*100));
+  const gprPct=Math.min(100,Math.max(0,(gpr-0.1)/(3.5-0.1)*100));
+  c.innerHTML=`
     <div class="ratio-card fade-in">
       <div class="ratio-header">
-        <div>
-          <div class="ratio-title" style="color:var(--gold)">⚖️ 金銀比率 (GSR)</div>
-          <div class="ratio-sub">金1oz = 銀 ${gsr.toFixed(1)}oz 分</div>
-        </div>
+        <div><div class="ratio-title" style="color:var(--gold)">⚖️ 金銀比率 (GSR)</div><div class="ratio-sub">金1oz = 銀 ${gsr.toFixed(1)}oz 分</div></div>
         <div class="ratio-value" style="color:var(--gold)">${gsr.toFixed(1)}</div>
       </div>
       <div class="gauge-wrap">
-        <div class="gauge-labels">
-          <span>15 割高</span>
-          <span>50</span>
-          <span>80</span>
-          <span>135 割安</span>
-        </div>
-        <div class="gauge-track" style="background:linear-gradient(to right,#f87171,#f87171 25%,#eab308 40%,#eab308 55%,#4ade80 70%,#4ade80)">
-          <div class="gauge-needle" style="left:${gsrPct}%"></div>
-        </div>
-        <div class="gauge-verdict ${gsrVCls}">${gsrVerdict}</div>
+        <div class="gauge-labels"><span>15 割高</span><span>50</span><span>80</span><span>135 割安</span></div>
+        <div class="gauge-track" style="background:linear-gradient(to right,#f87171,#f87171 25%,#eab308 40%,#eab308 55%,#4ade80 70%,#4ade80)"><div class="gauge-needle" style="left:${gsrPct}%"></div></div>
+        <div class="gauge-verdict ${gsrC}">${gsrV}</div>
       </div>
     </div>
-
     <div class="ratio-card fade-in">
       <div class="ratio-header">
-        <div>
-          <div class="ratio-title" style="color:var(--platinum)">💎 金プラチナ比率 (GPR)</div>
-          <div class="ratio-sub">金1oz = Pt ${gpr.toFixed(2)}oz 分</div>
-        </div>
+        <div><div class="ratio-title" style="color:var(--platinum)">💎 金プラチナ比率 (GPR)</div><div class="ratio-sub">金1oz = Pt ${gpr.toFixed(2)}oz 分</div></div>
         <div class="ratio-value" style="color:var(--platinum)">${gpr.toFixed(2)}</div>
       </div>
       <div class="gauge-wrap">
-        <div class="gauge-labels">
-          <span>0.1 Pt割高</span>
-          <span>1.0</span>
-          <span>2.0</span>
-          <span>3.5 Pt割安</span>
-        </div>
-        <div class="gauge-track" style="background:linear-gradient(to right,#f87171,#f87171 20%,#eab308 38%,#eab308 52%,#4ade80 68%,#4ade80)">
-          <div class="gauge-needle" style="left:${gprPct}%"></div>
-        </div>
-        <div class="gauge-verdict ${gprVCls}">${gprVerdict}</div>
+        <div class="gauge-labels"><span>0.1 Pt割高</span><span>1.0</span><span>2.0</span><span>3.5 Pt割安</span></div>
+        <div class="gauge-track" style="background:linear-gradient(to right,#f87171,#f87171 20%,#eab308 38%,#eab308 52%,#4ade80 68%,#4ade80)"><div class="gauge-needle" style="left:${gprPct}%"></div></div>
+        <div class="gauge-verdict ${gprC}">${gprV}</div>
       </div>
     </div>
-  `;
+    ${pd?`<div class="ratio-card fade-in"><div class="ratio-header"><div><div class="ratio-title" style="color:var(--palladium)">🔮 金パラジウム比率</div><div class="ratio-sub">金1oz = Pd ${(g/pd).toFixed(2)}oz 分</div></div><div class="ratio-value" style="color:var(--palladium)">${(g/pd).toFixed(2)}</div></div></div>`:''}`;
+}
 
-  // 金パラジウム比率（オプション）
-  if (palladium) {
-    const pdRatio = gold / palladium;
-    container.innerHTML += `
-      <div class="ratio-card fade-in">
-        <div class="ratio-header">
-          <div>
-            <div class="ratio-title" style="color:var(--palladium)">🔮 金パラジウム比率</div>
-            <div class="ratio-sub">金1oz = Pd ${pdRatio.toFixed(2)}oz 分</div>
-          </div>
-          <div class="ratio-value" style="color:var(--palladium)">${pdRatio.toFixed(2)}</div>
-        </div>
-      </div>
-    `;
+// ── チャート ──
+function buildDemoHistory(symbol, days){
+  const base=prices[symbol]?.price||3000;
+  const vol={XAU:0.008,XAG:0.015,XPT:0.012}[symbol]||0.01;
+  const data=[]; const now=new Date();
+  let p=base*(1-(days/365)*0.06+Math.random()*0.03);
+  for(let i=days;i>=0;i--){
+    const d=new Date(now); d.setDate(d.getDate()-i);
+    if(d.getDay()===0||d.getDay()===6) continue;
+    p=p*(1+(Math.random()-0.48)*vol);
+    data.push({date:d,price:Math.max(p,base*0.4)});
   }
+  if(data.length>0) data[data.length-1].price=base;
+  return data;
 }
 
-// ══════════════════════════════════════════
-//  タブ切替
-// ══════════════════════════════════════════
-function switchTab(name, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
+async function renderChart(){
+  const area=document.getElementById('chartArea');
+  area.innerHTML='<div class="chart-loading"><span class="spin-icon">↻</span> 読み込み中...</div>';
+  const meta=CHART_METALS[chartMetal];
+  document.getElementById('chartMetalName').textContent=meta.name;
+  document.getElementById('chartMetalName').style.color=meta.color;
+  document.getElementById('chartCurrentPrice').style.color=meta.color;
+
+  const key=`${chartMetal}_${chartPeriod}`;
+  if(!chartCache[key]) chartCache[key]=buildDemoHistory(chartMetal,chartPeriod);
+  const data=chartCache[key];
+
+  const first=data[0].price, last=data[data.length-1].price;
+  const pct=((last-first)/first*100).toFixed(2);
+  const sign=pct>0?'+':'', col=pct>0?'var(--up)':pct<0?'var(--down)':'var(--muted)';
+  document.getElementById('chartCurrentPrice').textContent=`$${last.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  document.getElementById('chartPeriodChange').innerHTML=`<span style="color:${col}">${sign}${pct}% (${chartPeriod}日間)</span>`;
+
+  area.innerHTML='<canvas id="priceChart"></canvas>';
+  const canvas=document.getElementById('priceChart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const cssW=canvas.parentElement.clientWidth-24, cssH=200;
+  canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
+  canvas.width=cssW*dpr; canvas.height=cssH*dpr;
+  ctx.scale(dpr,dpr);
+
+  const pad={top:10,right:8,bottom:32,left:52};
+  const w=cssW-pad.left-pad.right, h=cssH-pad.top-pad.bottom;
+  const ps=data.map(d=>d.price);
+  const minP=Math.min(...ps)*0.997, maxP=Math.max(...ps)*1.003;
+  const xOf=i=>pad.left+(i/(data.length-1))*w;
+  const yOf=p=>pad.top+h-((p-minP)/(maxP-minP))*h;
+
+  // グリッド＆Y軸ラベル
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  for(let j=0;j<=4;j++){
+    const y=pad.top+(h/4)*j;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+w,y); ctx.stroke();
+    const val=maxP-(maxP-minP)*(j/4);
+    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='9px monospace'; ctx.textAlign='right';
+    ctx.fillText('$'+val.toFixed(0),pad.left-4,y+4);
+  }
+
+  // グラデーション
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+h);
+  grad.addColorStop(0,meta.color+'55'); grad.addColorStop(1,meta.color+'00');
+  ctx.beginPath();
+  ctx.moveTo(xOf(0),yOf(data[0].price));
+  data.forEach((d,i)=>{if(i>0)ctx.lineTo(xOf(i),yOf(d.price));});
+  ctx.lineTo(xOf(data.length-1),pad.top+h); ctx.lineTo(xOf(0),pad.top+h);
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+
+  // ライン
+  ctx.beginPath(); ctx.strokeStyle=meta.color; ctx.lineWidth=2; ctx.lineJoin='round';
+  data.forEach((d,i)=>{i===0?ctx.moveTo(xOf(i),yOf(d.price)):ctx.lineTo(xOf(i),yOf(d.price));});
+  ctx.stroke();
+
+  // X軸ラベル
+  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='9px monospace'; ctx.textAlign='center';
+  [0,Math.floor(data.length/3),Math.floor(data.length*2/3),data.length-1].forEach(i=>{
+    const d=data[i];
+    ctx.fillText(`${d.date.getMonth()+1}/${d.date.getDate()}`,xOf(i),cssH-pad.bottom+14);
+  });
+
+  document.getElementById('chartNote').innerHTML=
+    '※ チャートはデモ表示です（推移の形は参考値）<br>現在値はGoldAPI.ioより取得';
+}
+
+function selectChartMetal(symbol,btn){
+  chartMetal=symbol;
+  ['XAU','XAG','XPT'].forEach(s=>document.getElementById('cmt'+s).className='cmt-btn');
+  btn.className='cmt-btn '+{XAU:'active-gold',XAG:'active-silver',XPT:'active-platinum'}[symbol];
+  renderChart();
+}
+
+function selectPeriod(days,btn){
+  chartPeriod=days; chartCache={};
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderChart();
+}
+
+// ── タブ切替 ──
+function switchTab(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
   el.classList.add('active');
+  if(name==='chart') renderChart();
 }
 
-// ══════════════════════════════════════════
-//  初期化
-// ══════════════════════════════════════════
-window.addEventListener('load', async () => {
-  // スプラッシュ
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('hidden');
-  }, 1600);
-
-  // スケルトン表示
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = METALS.map(() => `
+// ── 初期化 ──
+window.addEventListener('load',async()=>{
+  setTimeout(()=>document.getElementById('splash').classList.add('hidden'),1600);
+  const grid=document.getElementById('cardsGrid');
+  grid.innerHTML=METALS.map(()=>`
     <div class="metal-card" style="background:var(--surface)">
       <div class="skeleton" style="width:40px;height:10px;margin-bottom:8px"></div>
       <div class="skeleton" style="width:60px;height:14px;margin-bottom:12px"></div>
       <div class="skeleton" style="width:100%;height:22px;margin-bottom:6px"></div>
       <div class="skeleton" style="width:70%;height:10px;margin-bottom:10px"></div>
       <div class="skeleton" style="width:50px;height:18px;border-radius:20px"></div>
-    </div>
-  `).join('');
-
-  // キャッシュがあれば即表示
-  const cached = localStorage.getItem('metals_cache');
-  if (cached) {
-    try {
-      const data = JSON.parse(cached);
-      prices = data.prices;
-      renderCards();
-      renderRatios();
-      const cacheDate = new Date(data.ts);
-      document.getElementById('updateTime').textContent =
-        `キャッシュ: ${cacheDate.toLocaleDateString('ja-JP')} ${cacheDate.toLocaleTimeString('ja-JP')}`;
-    } catch(e) {}
+    </div>`).join('');
+  const cached=localStorage.getItem('metals_cache');
+  if(cached){
+    try{const d=JSON.parse(cached);prices=d.prices;renderCards();renderRatios();
+      const cd=new Date(d.ts);
+      document.getElementById('updateTime').textContent=`キャッシュ: ${cd.toLocaleDateString('ja-JP')} ${cd.toLocaleTimeString('ja-JP')}`;
+    }catch(e){}
   }
-
-  // APIから最新取得
   await fetchPrices();
 });
-
-// Service Worker 登録（PWA オフライン対応）
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(console.warn);
-}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
 </script>
 </body>
 </html>
